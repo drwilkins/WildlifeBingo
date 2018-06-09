@@ -8,22 +8,26 @@ ui <- fluidPage(
    # Application title
    titlePanel("Animal Sound Bingo"),
     sidebarLayout(
-    sidebarPanel(style="position:fixed",width=2,
+    sidebarPanel(style="position:fixed",
        # Sidebar with a slider input for number of bins 
-    checkboxInput("showpic","Show Picture?",FALSE),
+    fluidRow(
+      checkboxInput("showpic","Show Picture?",FALSE),
+    sliderInput("picsize","Picture Size",20,1000,100,step=20,ticks=F),
     actionButton("call","Next Sound"),
         tags$br(),
          tags$br(),
          tags$br(),
         "--------------------------------",
-        checkboxInput("reveal","Reveal Answers?",FALSE)), #end sidebar
+        checkboxInput("reveal","Reveal Answers?",FALSE))), #end sidebar
      mainPanel(
-       tags$br(), 
-       uiOutput('dynamic'),
-       tags$br(),tags$br(),tags$br(),tags$br(),
-        actionButton("reset","Reset for next round"),
-        tags$br(),
-        tags$br()
+         fluidRow( 
+         tags$br(), 
+         uiOutput('dynamic'),
+         tags$br(),tags$br(),tags$br(),tags$br(),
+          actionButton("reset","Reset for next round"),
+          tags$br(),
+          tags$br()
+       )
        
       )#End main panel
    )
@@ -71,7 +75,7 @@ server <- function(input, output) {
       }else{
       picname<-gsub(pattern="_.+$",replacement="",x=isolate(vals$ordr[i] ))
         noanswer<-list(
-          tags$h1(paste0(i,"  "),style=" display:inline"),tags$img(src=paste0(picname,".jpg"), height=200,width= "auto"),tags$audio(src=isolate(paste0(vals$ordr[i],".mp3")),type = 'audio/mp3', controls = 'false'),
+          tags$h1(paste0(i,"  "),style=" display:inline"),tags$img(src=paste0(picname,".jpg"), height=input$picsize,width= "auto"),tags$audio(src=isolate(paste0(vals$ordr[i],".mp3")),type = 'audio/mp3', controls = 'false'),
         tags$br(),tags$br())
       }
       
