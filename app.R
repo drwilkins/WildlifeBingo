@@ -1,37 +1,88 @@
 
 
 
-library(shiny);library(rlist)
+library(shiny);library(rlist);require(stringr)
+
+#Prep game
+afilez<-list.files("www/",pattern="(.mp3)") #find audio files; use to set up bingo game
+filez<-sapply(afilez,function(x) tools::file_path_sans_ext(x),USE.NAMES = F) 
+picnamez<-sapply(filez,function(x) gsub(pattern="_.+$",replacement="",x))
+picfilez<-paste0(picnamez,".jpg")
+answers<-sapply(filez,function(x) gsub("_XC.*","",x),USE.NAMES = F)
+#all the spec names have _1 at end due to an annoying issue w/ my prepStaticSpec code
+specs<-paste0(filez,"_1.png")
+
 
 # Define UI for application that draws a histogram
-ui <- fluidPage(
+ui <- navbarPage(title="Backyard Bioacoustics",theme=shinythemes::shinytheme("cerulean"),
    # Application title
-   titlePanel("Animal Sound Bingo"),
-    sidebarLayout(
-    sidebarPanel(style="position:fixed",
-       # Sidebar with a slider input for number of bins 
+   #titlePanel("Who Said That? A Backyard Bioacoustics Game"),
+   #dashboardHeader("dsjks"),
+   tabPanel("Quiz", 
+   fluidPage(
+     #set styles
+     tags$head(
+       tags$style(HTML("
+                       img{
+                       margin: 10px;
+                       border-width: 3px;
+                       border-style: solid;
+                       max-height: 200px;
+                       max-width: 100%;
+                       width: auto;
+                       }
+                      .acoustics{
+                        width: auto;
+                        max-height: 200px;
+                        display: inline;
+                      }")
+                  )
+     ),
+   sidebarPanel(
+    # sidebarPanel(style="position:fixed",
+    #    # Sidebar with a slider input for number of bins 
     fluidRow(
       checkboxInput("showpic","Show Picture?",FALSE),
     sliderInput("picsize","Picture Size",20,1000,100,step=20,ticks=F),
-    actionButton("call","Next Sound"),
+    actionButton("Reset for next round","reset"),
         tags$br(),
          tags$br(),
          tags$br(),
         "--------------------------------",
-        checkboxInput("reveal","Reveal Answers?",FALSE))), #end sidebar
+        actionButton("call","Next Sound"),
+        checkboxInput("reveal","Reveal Answers?",FALSE))
+    ), #end sidebar
      mainPanel(
          fluidRow( 
          tags$br(), 
          uiOutput('dynamic'),
          tags$br(),tags$br(),tags$br(),tags$br(),
-          actionButton("reset","Reset for next round"),
-          tags$br(),
-          tags$br()
-       )
-       
-      )#End main panel
-   )
-)
+         tags$br()
+          )
+       )#End main panel
+     )),#End Quiz Tab
+   tabPanel("Study",
+          sidebarPanel(width=2,
+          sliderInput("picsize","Picture Size",20,1000,100,step=20,ticks=F),
+          checkboxInput("showLabs","c",F)
+          ),
+          mainPanel(width=10,
+          lapply(1:length(filez),function(i) {
+            wellPanel(fluidRow(
+              h3(paste0(i,": ",answers[i])),
+              img(src=picfilez[i],height="200px",width="auto"),
+              div(class="acoustics",
+              img(src=specs[i]),
+              tags$audio(src=afilez[i],type = 'audio/mp3', controls = 'false')
+              )
+            )
+            )
+          })
+          )
+          )
+   
+  )#end UI
+
 
 
 #------------------------------------------------
@@ -71,12 +122,12 @@ server <- function(input, output) {
     tagstring<-lapply(1:vals$counter,function(i) {
       
       if(input$showpic==F){
-      noanswer<-list(tags$h1(paste0(i,"  "),style=" display:inline"),tags$audio(src=isolate(paste0(vals$ordr[i],".mp3")),type = 'audio/mp3', controls = 'false'))  
+      noanswer<-list(h1(paste0(i,"  "),style=" display:inline"),tags$audio(src=isolate(paste0(vals$ordr[i],".mp3")),type = 'audio/mp3', controls = 'false'))  
       }else{
       picname<-gsub(pattern="_.+$",replacement="",x=isolate(vals$ordr[i] ))
-        noanswer<-list(
+        noanswer<-list(wellPanel(
           tags$h1(paste0(i,"  "),style=" display:inline"),tags$img(src=paste0(picname,".jpg"), height=input$picsize,width= "auto"),tags$audio(src=isolate(paste0(vals$ordr[i],".mp3")),type = 'audio/mp3', controls = 'false'),
-        tags$br(),tags$br())
+        tags$br(),tags$br()))
       }
       
       #Test if answer wanted
